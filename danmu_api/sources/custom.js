@@ -7,37 +7,37 @@ import { simplized } from "../utils/zh-util.js";
 import { SegmentListResponse } from '../models/dandan-model.js';
 
 // =====================
-// 获取弹弹play弹幕
+// 获取自定义源弹幕
 // =====================
-export default class DandanSource extends BaseSource {
+export default class CustomSource extends BaseSource {
   async search(keyword) {
     try {
-      const resp = await httpGet(`https://api.danmaku.weeblify.app/ddp/v1?path=/v2/search/anime?keyword=${keyword}`, {
+      const resp = await httpGet(`${globals.customSourceApiUrl}/api/v2/search/anime?keyword=${keyword}`, {
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": `LogVar Danmu API/${globals.version}`,
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
       });
 
       // 判断 resp 和 resp.data 是否存在
       if (!resp || !resp.data) {
-        log("info", "dandanSearchresp: 请求失败或无数据返回");
+        log("info", "customSourceSearchresp: 请求失败或无数据返回");
         return [];
       }
 
       // 判断 seriesData 是否存在
       if (!resp.data.animes) {
-        log("info", "dandanSearchresp: seriesData 或 seriesList 不存在");
+        log("info", "customSourceSearchresp: seriesData 或 seriesList 不存在");
         return [];
       }
 
       // 正常情况下输出 JSON 字符串
-      log("info", `dandanSearchresp: ${JSON.stringify(resp.data.animes)}`);
+      log("info", `customnSourceSearchresp: ${JSON.stringify(resp.data.animes)}`);
 
       return resp.data.animes;
     } catch (error) {
       // 捕获请求中的错误
-      log("error", "getDandanAnimes error:", {
+      log("error", "getCustomSourceAnimes error:", {
         message: error.message,
         name: error.name,
         stack: error.stack,
@@ -48,32 +48,32 @@ export default class DandanSource extends BaseSource {
 
   async getEpisodes(id) {
     try {
-      const resp = await httpGet(`https://api.danmaku.weeblify.app/ddp/v1?path=/v2/bangumi/${id}`, {
+      const resp = await httpGet(`${globals.customSourceApiUrl}/api/v2/bangumi/${id}`, {
         headers: {
           "Content-Type": "application/json",
-          "User-Agent": `LogVar Danmu API/${globals.version}`,
+          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         },
       });
 
       // 判断 resp 和 resp.data 是否存在
       if (!resp || !resp.data) {
-        log("info", "getDandanEposides: 请求失败或无数据返回");
+        log("info", "getCustomSourceEposides: 请求失败或无数据返回");
         return [];
       }
 
       // 判断 seriesData 是否存在
-      if (!resp.data.bangumi && !resp.data.bangumi.episodes) {
-        log("info", "getDandanEposides: episodes 不存在");
+      if (!resp.data.bangumi || !resp.data.bangumi.episodes) {
+        log("info", `getCustomSourceEposides: episodes 不存在. Response: ${JSON.stringify(resp.data)}`);
         return [];
       }
 
       // 正常情况下输出 JSON 字符串
-      log("info", `getDandanEposides: ${JSON.stringify(resp.data.bangumi.episodes)}`);
+      log("info", `getCustomSourceEposides: ${JSON.stringify(resp.data.bangumi.episodes)}`);
 
       return resp.data.bangumi.episodes;
     } catch (error) {
       // 捕获请求中的错误
-      log("error", "getDandanEposides error:", {
+      log("error", "getCustomSourceEposides error:", {
         message: error.message,
         name: error.name,
         stack: error.stack,
@@ -87,30 +87,30 @@ export default class DandanSource extends BaseSource {
 
     // 添加错误处理，确保sourceAnimes是数组
     if (!sourceAnimes || !Array.isArray(sourceAnimes)) {
-      log("error", "[Dandan] sourceAnimes is not a valid array");
+      log("error", "[Custom Source] sourceAnimes is not a valid array");
       return [];
     }
 
     // 使用 map 和 async 时需要返回 Promise 数组，并等待所有 Promise 完成
-    const processDandanAnimes = await Promise.all(sourceAnimes
+    const processCustomSourceAnimes = await Promise.all(sourceAnimes
       .map(async (anime) => {
         try {
-          const eps = await this.getEpisodes(anime.animeId);
+          const eps = await this.getEpisodes(anime.bangumiId);
           let links = [];
           for (const ep of eps) {
             const epTitle = ep.episodeTitle && ep.episodeTitle.trim() !== "" ? `${ep.episodeTitle}` : `第${ep.episodeNumber}集`;
             links.push({
               "name": epTitle,
               "url": ep.episodeId.toString(),
-              "title": `【dandan】 ${epTitle}`
+              "title": `【custom】 ${epTitle}`
             });
           }
 
           if (links.length > 0) {
             let transformedAnime = {
               animeId: anime.animeId,
-              bangumiId: String(anime.animeId),
-              animeTitle: `${anime.animeTitle}(${new Date(anime.startDate).getFullYear()})【${anime.typeDescription}】from dandan`,
+              bangumiId: String(anime.bangumiId),
+              animeTitle: `${anime.animeTitle}(${new Date(anime.startDate).getFullYear()})【${anime.typeDescription}】from custom`,
               type: anime.type,
               typeDescription: anime.typeDescription,
               imageUrl: anime.imageUrl,
@@ -118,7 +118,7 @@ export default class DandanSource extends BaseSource {
               episodeCount: links.length,
               rating: anime.rating,
               isFavorited: true,
-              source: "dandan",
+              source: "custom",
             };
 
             tmpAnimes.push(transformedAnime);
@@ -128,21 +128,21 @@ export default class DandanSource extends BaseSource {
             if (globals.animes.length > globals.MAX_ANIMES) removeEarliestAnime();
           }
         } catch (error) {
-          log("error", `[Dandan] Error processing anime: ${error.message}`);
+          log("error", `[Custom Source] Error processing anime: ${error.message}`);
         }
       })
     );
 
     this.sortAndPushAnimesByYear(tmpAnimes, curAnimes);
 
-    return processDandanAnimes;
+    return processCustomSourceAnimes;
   }
 
   async getEpisodeDanmu(id) {
     let allDanmus = [];
 
     try {
-      const resp = await httpGet(`https://api.danmaku.weeblify.app/ddp/v1?path=%2Fv2%2Fcomment%2F${id}%3Ffrom%3D0%26withRelated%3Dtrue%26chConvert%3D0`, {
+      const resp = await httpGet(`${globals.customSourceApiUrl}/api/v2/comment/${id}`, {
         headers: {
           "Content-Type": "application/json",
           "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -158,7 +158,7 @@ export default class DandanSource extends BaseSource {
       return allDanmus;
     } catch (error) {
       // 捕获请求中的错误
-      log("error", "fetchDandanEpisodeDanmu error:", {
+      log("error", "fetchCustomSourceEpisodeDanmu error:", {
         message: error.message,
         name: error.name,
         stack: error.stack,
@@ -168,12 +168,12 @@ export default class DandanSource extends BaseSource {
   }
 
   async getEpisodeDanmuSegments(id) {
-    log("info", "获取弹弹play弹幕分段列表...", id);
+    log("info", "获取Custom Source弹幕分段列表...", id);
 
     return new SegmentListResponse({
-      "type": "dandan",
+      "type": "custom",
       "segmentList": [{
-        "type": "dandan",
+        "type": "custom",
         "segment_start": 0,
         "segment_end": 30000,
         "url": id

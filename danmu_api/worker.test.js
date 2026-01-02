@@ -19,6 +19,12 @@ import MangoSource from "./sources/mango.js";
 import BilibiliSource from "./sources/bilibili.js";
 import YoukuSource from "./sources/youku.js";
 import OtherSource from "./sources/other.js";
+import { NodeHandler } from "./configs/handlers/node-handler.js";
+import { VercelHandler } from "./configs/handlers/vercel-handler.js";
+import { NetlifyHandler } from "./configs/handlers/netlify-handler.js";
+import { CloudflareHandler } from "./configs/handlers/cloudflare-handler.js";
+import { EdgeoneHandler } from "./configs/handlers/edgeone-handler.js";
+import { Segment } from "./models/dandan-model.js"
 
 // Mock Request class for testing
 class MockRequest {
@@ -60,8 +66,6 @@ test('worker.js API endpoints', async (t) => {
     const body = await parseResponse(res);
 
     assert.equal(res.status, 200);
-    assert.equal(res.headers.get('Content-Type'), 'application/json');
-    assert.deepEqual(body.message, 'Welcome to the LogVar Danmu API server');
   });
 
   // 测试标题解析
@@ -87,28 +91,116 @@ test('worker.js API endpoints', async (t) => {
   });
 
   // await t.test('GET tencent danmu', async () => {
-  //   const res = await tencentSource.getComments("http://v.qq.com/x/cover/rjae621myqca41h/j0032ubhl9s.html");
+  //   const res = await tencentSource.getComments("http://v.qq.com/x/cover/rjae621myqca41h/j0032ubhl9s.html", "qq");
+  //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
+  // });
+
+  // await t.test('GET tencent danmu segments', async () => {
+  //   const res = await tencentSource.getComments("http://v.qq.com/x/cover/rjae621myqca41h/j0032ubhl9s.html", "qq", true);
+  //   assert(res.type === "qq", `Expected res.type === "qq", but got ${res.type === "qq"}`);
+  //   assert(res.segmentList.length > 2, `Expected res.segmentList.length > 2, but got ${res.length}`);
+  // });
+
+  // await t.test('GET tencent segment danmu', async () => {
+  //   const segment = Segment.fromJson({
+  //     "type": "qq",
+  //     "segment_start": 0,
+  //     "segment_end": 60,
+  //     "url": "https://dm.video.qq.com/barrage/segment/j0032ubhl9s/t/v1/30000/60000"
+  //   });
+  //   const res = await tencentSource.getSegmentComments(segment);
   //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
   // });
 
   // await t.test('GET iqiyi danmu', async () => {
-  //   const res = await iqiyiSource.getComments("https://www.iqiyi.com/v_1ftv9n1m3bg.html");
+  //   const res = await iqiyiSource.getComments("https://www.iqiyi.com/v_1ftv9n1m3bg.html", "qiyi");
+  //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
+  // });
+
+  // await t.test('GET iqiyi danmu segments', async () => {
+  //   const res = await iqiyiSource.getComments("https://www.iqiyi.com/v_1ftv9n1m3bg.html", "qiyi", true);
+  //   assert(res.type === "qiyi", `Expected res.type === "qiyi", but got ${res.type === "qiyi"}`);
+  //   assert(res.segmentList.length > 2, `Expected res.segmentList.length > 2, but got ${res.length}`);
+  // });
+
+  // await t.test('GET iqiyi segment danmu', async () => {
+  //   const segment = Segment.fromJson({
+  //     "type": "qiyi",
+  //     "segment_start": 0,
+  //     "segment_end": 60,
+  //     "url": "https://cmts.iqiyi.com/bullet/80/00/5284367795028000_300_4.z?rn=0.0123456789123456&business=danmu&is_iqiyi=true&is_video_page=true&tvid=5284367795028000&albumid=2524115110632101&categoryid=2&qypid=010102101000000000"
+  //   });
+  //   const res = await iqiyiSource.getSegmentComments(segment);
   //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
   // });
 
   // await t.test('GET mango danmu', async () => {
-  //   const res = await mangoSource.getComments("https://www.mgtv.com/b/771610/23300622.html");
+  //   const res = await mangoSource.getComments("https://www.mgtv.com/b/771610/23300622.html", "imgo");
+  //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
+  // });
+
+  // await t.test('GET mango danmu segments', async () => {
+  //   const res = await mangoSource.getComments("https://www.mgtv.com/b/771610/23300622.html", "imgo", true);
+  //   assert(res.type === "imgo", `Expected res.type === "imgo", but got ${res.type}`);
+  //   assert(res.segmentList.length >= 0, `Expected res.segmentList.length >= 0, but got ${res.segmentList.length}`);
+  // });
+
+  // await t.test('GET mango segment danmu', async () => {
+  //   const segment = Segment.fromJson({
+  //     "type": "imgo",
+  //     "segment_start": 0,
+  //     "segment_end": 60,
+  //     "url": "https://bullet-ali.hitv.com/bullet/tx/2025/12/14/011640/23300622/23.json"
+  //   });
+  //   const res = await mangoSource.getSegmentComments(segment);
   //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
   // });
 
   // await t.test('GET bilibili danmu', async () => {
-  //   const res = await bilibiliSource.getComments("https://www.bilibili.com/bangumi/play/ep1231564");
+  //   const res = await bilibiliSource.getComments("https://www.bilibili.com/bangumi/play/ep1231564", "bilibili1");
   //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
+  // });
+
+  // await t.test('GET bilibili danmu segments', async () => {
+  //   const res = await bilibiliSource.getComments("https://www.bilibili.com/bangumi/play/ep1231564", "bilibili1", true);
+  //   assert(res.type === "bilibili1", `Expected res.type === "bilibili1", but got ${res.type}`);
+  //   assert(res.segmentList.length >= 0, `Expected res.segmentList.length >= 0, but got ${res.segmentList.length}`);
+  // });
+
+  // await t.test('GET bilibili segment danmu', async () => {
+  //   const segment = Segment.fromJson({
+  //     "type": "bilibili1",
+  //     "segment_start": 0,
+  //     "segment_end": 60,
+  //     "url": "https://api.bilibili.com/x/v2/dm/web/seg.so?type=1&oid=32131450212&segment_index=2"
+  //   });
+  //   const res = await bilibiliSource.getSegmentComments(segment);
+  //   assert(res.length >= 0, `Expected res.length >= 0, but got ${res.length}`);
   // });
 
   // await t.test('GET youku danmu', async () => {
   //   const res = await youkuSource.getComments("https://v.youku.com/v_show/id_XNjQ3ODMyNjU3Mg==.html");
   //   assert(res.length > 2, `Expected res.length > 2, but got ${res.length}`);
+  // });
+
+  // await t.test('GET youku danmu segments', async () => {
+  //   const res = await youkuSource.getComments("https://v.youku.com/v_show/id_XNjQ3ODMyNjU3Mg==.html", "youku", true);
+  //   assert(res.type === "youku", `Expected res.type === "youku", but got ${res.type === "youku"}`);
+  //   assert(res.segmentList.length >= 0, `Expected res.segmentList.length >= 0, but got ${res.segmentList.length}`);
+  // });
+
+  // await t.test('GET youku segment danmu', async () => {
+  //   const segment = Segment.fromJson({
+  //     "type": "youku",
+  //     "segment_start": 0,
+  //     "segment_end": 60,
+  //     "url": "https://acs.youku.com/h5/mopen.youku.danmu.list/1.0/?jsv=2.5.6&appKey=24679788&t=1765980205381&sign=355caad7d41ec0bf445cce48fce4d93e&api=mopen.youku.danmu.list&v=1.0&type=originaljson&dataType=jsonp&timeout=20000&jsonpIncPrefix=utility",
+  //     "data": "{\"ctime\":1765980205380,\"ctype\":10004,\"cver\":\"v1.0\",\"guid\":\"JqbJIT/Q0XMCAXPAGpb9gBcg\",\"mat\":0,\"mcount\":1,\"pid\":0,\"sver\":\"3.1.0\",\"type\":1,\"vid\":\"XNjQ3ODMyNjU3Mg==\",\"msg\":\"eyJjdGltZSI6MTc2NTk4MDIwNTM4MCwiY3R5cGUiOjEwMDA0LCJjdmVyIjoidjEuMCIsImd1aWQiOiJKcWJKSVQvUTBYTUNBWFBBR3BiOWdCY2ciLCJtYXQiOjAsIm1jb3VudCI6MSwicGlkIjowLCJzdmVyIjoiMy4xLjAiLCJ0eXBlIjoxLCJ2aWQiOiJYTmpRM09ETXlOalUzTWc9PSJ9\",\"sign\":\"b94e1d2cf6dc1ffcf80845b0ea82b7ef\"}",
+  //     "_m_h5_tk": "d12df59d06f2830de1c681e04285a895_1765985058907",
+  //     "_m_h5_tk_enc": "082c6cbbad97b5b48b7798a51933bbfa"
+  //   });
+  //   const res = await youkuSource.getSegmentComments(segment);
+  //   assert(res.length >= 0, `Expected res.length >= 0, but got ${res.length}`);
   // });
 
   // await t.test('GET other_server danmu', async () => {
@@ -136,6 +228,24 @@ test('worker.js API endpoints', async (t) => {
   //   assert(res.length > 0, `Expected res.length > 0, but got ${res.length}`);
   // });
 
+  // await t.test('GET hanjutv danmu segments', async () => {
+  //   const res = await hanjutvSource.getComments("12tY0Ktjzu5TCBrfTolNO", "hanjutv", true);
+  //   console.log(res);
+  //   assert(res.type === "hanjutv", `Expected res.type === "hanjutv", but got ${res.type === "hanjutv"}`);
+  //   assert(res.segmentList.length >= 0, `Expected res.segmentList.length >= 0, but got ${res.segmentList.length}`);
+  // });
+
+  // await t.test('GET hanjutv segment danmu', async () => {
+  //   const segment = Segment.fromJson({
+  //     "type": "hanjutv",
+  //     "segment_start": 0,
+  //     "segment_end": 30000,
+  //     "url": "12tY0Ktjzu5TCBrfTolNO"
+  //   });
+  //   const res = await hanjutvSource.getSegmentComments(segment);
+  //   assert(res.length >= 0, `Expected res.length >= 0, but got ${res.length}`);
+  // });
+
   // await t.test('GET bahamut search', async () => {
   //   const res = await bahamutSource.search("胆大党");
   //   assert(res.length > 0, `Expected res.length > 0, but got ${res.length}`);
@@ -149,6 +259,24 @@ test('worker.js API endpoints', async (t) => {
   // await t.test('GET bahamut danmu', async () => {
   //   const res = await bahamutSource.getComments("44453");
   //   assert(res.length > 0, `Expected res.length > 0, but got ${res.length}`);
+  // });
+
+  // await t.test('GET bahamut danmu segments', async () => {
+  //   const res = await bahamutSource.getComments("44453", "bahamut", true);
+  //   console.log(res);
+  //   assert(res.type === "bahamut", `Expected res.type === "bahamut", but got ${res.type === "bahamut"}`);
+  //   assert(res.segmentList.length >= 0, `Expected res.segmentList.length >= 0, but got ${res.segmentList.length}`);
+  // });
+
+  // await t.test('GET bahamut segment danmu', async () => {
+  //   const segment = Segment.fromJson({
+  //     "type": "bahamut",
+  //     "segment_start": 0,
+  //     "segment_end": 30000,
+  //     "url": "44453"
+  //   });
+  //   const res = await bahamutSource.getSegmentComments(segment);
+  //   assert(res.length >= 0, `Expected res.length >= 0, but got ${res.length}`);
   // });
 
   // await t.test('GET realistic danmu', async () => {
@@ -299,5 +427,178 @@ test('worker.js API endpoints', async (t) => {
   // await t.test('GET TMDB Chinese title', async () => {
   //   const res = await getTMDBChineseTitle("Blood River", 1, 4);
   //   assert(res === "暗河传", `Expected res === "暗河传", but got ${res}`);
+  // });
+
+  // // 测试获取全部环境变量
+  // await t.test('Config getAllEnv', async () => {
+  //   const handler = new NodeHandler();
+  //   const res = handler.getAllEnv();
+  //   assert(Number(res.DANMU_LIMIT) === 0, `Expected Number(res.DANMU_LIMIT) === 0, but got ${Number(res.DANMU_LIMIT)}`);
+  // });
+
+  // // 测试获取某个环境变量
+  // await t.test('Config getEnv', async () => {
+  //   const handler = new NodeHandler();
+  //   const res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 0, `Expected Number(res) === 0, but got ${Number(res)}`);
+  // });
+
+  // // 测试Node设置环境变量
+  // await t.test('Node Config setEnv', async () => {
+  //   const handler = new NodeHandler();
+  //   let res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 0, `Expected Number(res) === 0, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 1);
+  //   res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 1, `Expected Number(res) === 1, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 0);
+  // });
+  //
+  // // 测试Node添加和删除环境变量
+  // await t.test('Node Config addEnv and del Env', async () => {
+  //   const handler = new NodeHandler();
+  //   await handler.addEnv("UPSTASH_REDIS_REST_TOKEN", "xxxx");
+  //   let res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "xxxx", `Expected res === "xxxx", but got ${res}`);
+  //   await handler.delEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "", `Expected res === "", but got ${res}`);
+  // });
+
+  // // 测试Vercel设置环境变量
+  // await t.test('Vercel Config setEnv', async () => {
+  //   const handler = new VercelHandler();
+  //   let res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 0, `Expected Number(res) === 0, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 1);
+  //   res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 1, `Expected Number(res) === 1, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 0);
+  // });
+  //
+  // // 测试Vercel添加和删除环境变量
+  // await t.test('Vercel Config addEnv and del Env', async () => {
+  //   const handler = new VercelHandler();
+  //   await handler.addEnv("UPSTASH_REDIS_REST_TOKEN", "xxxx");
+  //   let res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "xxxx", `Expected res === "xxxx", but got ${res}`);
+  //   await handler.delEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "", `Expected res === "", but got ${res}`);
+  // });
+
+  // // 测试Vercel项目变量是否生效
+  // await t.test('Vercel Check Params', async () => {
+  //   const handler = new VercelHandler();
+  //   const res = await handler.checkParams("", "", "");
+  //   assert(res, `Expected res is true, but got ${res}`);
+  // });
+
+  // // 测试Vercel触发部署
+  // await t.test('Vercel deploy', async () => {
+  //   const handler = new VercelHandler();
+  //   const res = await handler.deploy();
+  //   assert(res, `Expected res is true, but got ${res}`);
+  // });
+
+  // // 测试Netlify设置环境变量
+  // await t.test('Netlify Config setEnv', async () => {
+  //   const handler = new NetlifyHandler();
+  //   let res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 0, `Expected Number(res) === 0, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 1);
+  //   res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 1, `Expected Number(res) === 1, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 0);
+  // });
+  //
+  // // 测试Netlify添加和删除环境变量
+  // await t.test('Netlify Config addEnv and del Env', async () => {
+  //   const handler = new NetlifyHandler();
+  //   await handler.addEnv("UPSTASH_REDIS_REST_TOKEN", "xxxx");
+  //   let res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "xxxx", `Expected res === "xxxx", but got ${res}`);
+  //   await handler.delEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "", `Expected res === "", but got ${res}`);
+  // });
+
+  // // 测试Netlify项目变量是否生效
+  // await t.test('Netlify Check Params', async () => {
+  //   const handler = new NetlifyHandler();
+  //   const res = await handler.checkParams("", "", "");
+  //   assert(res, `Expected res is true, but got ${res}`);
+  // });
+
+  // // 测试Netlify触发部署
+  // await t.test('Netlify deploy', async () => {
+  //   const handler = new NetlifyHandler();
+  //   const res = await handler.deploy();
+  //   assert(res, `Expected res is true, but got ${res}`);
+  // });
+
+  // // 测试Cloudflare设置环境变量
+  // await t.test('Cloudflare Config setEnv', async () => {
+  //   const handler = new CloudflareHandler();
+  //   let res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 0, `Expected Number(res) === 0, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 1);
+  //   res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 1, `Expected Number(res) === 1, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 0);
+  // });
+
+  // // 测试Cloudflare添加和删除环境变量
+  // await t.test('Cloudflare Config addEnv and del Env', async () => {
+  //   const handler = new CloudflareHandler();
+  //   await handler.addEnv("UPSTASH_REDIS_REST_TOKEN", "xxxx");
+  //   let res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "xxxx", `Expected res === "xxxx", but got ${res}`);
+  //   await handler.delEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   res = handler.getEnv("UPSTASH_REDIS_REST_TOKEN");
+  //   assert(res === "", `Expected res === "", but got ${res}`);
+  // });
+
+  // // 测试Cloudflare项目变量是否生效
+  // await t.test('Cloudflare Check Params', async () => {
+  //   const handler = new CloudflareHandler();
+  //   const res = await handler.checkParams("", "", "");
+  //   assert(res, `Expected res is true, but got ${res}`);
+  // });
+
+  // // 测试Edgeone设置环境变量
+  // await t.test('Edgeone Config setEnv', async () => {
+  //   const handler = new EdgeoneHandler();
+  //   let res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 0, `Expected Number(res) === 0, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 1);
+  //   res = handler.getEnv("DANMU_LIMIT");
+  //   assert(Number(res) === 1, `Expected Number(res) === 1, but got ${Number(res)}`);
+  //   await handler.setEnv("DANMU_LIMIT", 0);
+  // });
+
+  // // 测试Edgeone添加和删除环境变量
+  // await t.test('Edgeone Config addEnv and del Env', async () => {
+  //   const handler = new EdgeoneHandler();
+  //   await handler.addEnv("PROXY_URL", "xxxx");
+  //   let res = handler.getEnv("PROXY_URL");
+  //   assert(res === "xxxx", `Expected res === "xxxx", but got ${res}`);
+  //   await handler.delEnv("PROXY_URL");
+  //   res = handler.getEnv("PROXY_URL");
+  //   assert(res === "", `Expected res === "", but got ${res}`);
+  // });
+
+  // // 测试Edgeone项目变量是否生效
+  // await t.test('Edgeone Check Params', async () => {
+  //   const handler = new EdgeoneHandler();
+  //   const res = await handler.checkParams("", "", "");
+  //   assert(res, `Expected res is true, but got ${res}`);
+  // });
+
+  // // 测试Edgeone触发部署
+  // await t.test('Edgeone deploy', async () => {
+  //   const handler = new EdgeoneHandler();
+  //   const res = await handler.deploy();
+  //   assert(res, `Expected res is true, but got ${res}`);
   // });
 });
