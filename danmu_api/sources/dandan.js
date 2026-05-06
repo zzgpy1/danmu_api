@@ -13,6 +13,7 @@ import BilibiliSource from "./bilibili.js";
 import YoukuSource from "./youku.js";
 import BahamutSource from "./bahamut.js";
 import { titleMatches, getExplicitSeasonNumber } from "../utils/common-util.js";
+import { searchBangumiData } from '../utils/bangumi-data-util.js';
 
 const tencentSource = new TencentSource();
 const iqiyiSource = new IqiyiSource();
@@ -35,6 +36,28 @@ export default class DandanSource extends BaseSource {
    * @param {boolean} isFallback 标记当前是否处于降级搜索状态，防止无限递归
    */
   async search(keyword, isFallback = false) {
+    if (globals.useBangumiData && !isFallback) {
+      const localMatches = searchBangumiData(keyword, ['anidb']);
+      if (localMatches.length > 0) {
+        log("info", `[Dandan] Bangumi-Data 本地命中 ${localMatches.length} 条数据`);
+        return localMatches.map(m => {
+          const displayTitle = m.titles.find(t => t && t.includes(keyword)) || m.titles[1] || m.title;
+          const finalTitle = displayTitle + (m.titleSuffix || '');
+
+          return {
+            animeId: parseInt(m.siteId),
+            animeTitle: finalTitle,
+            type: m.typeId, 
+            typeDescription: m.typeStr, 
+            imageUrl: "", 
+            startDate: m.begin,
+            rating: 0,
+			aliases: [...m.titles]
+          };
+        });
+      }
+    }
+
     try {
       log("info", `[Dandan] 原始搜索词: ${keyword}`);
 
@@ -49,6 +72,7 @@ export default class DandanSource extends BaseSource {
               "Content-Type": "application/json",
               "User-Agent": DandanUserAgent,
             },
+			retries: 1,
           });
 
           // 判断 resp 和 resp.data 是否存在
@@ -105,6 +129,7 @@ export default class DandanSource extends BaseSource {
               "User-Agent": DandanUserAgent,
             },
             signal: tmdbAbortController.signal,
+			retries: 1,
           });
 
           // 判断 resp 和 resp.data 是否存在
@@ -328,7 +353,11 @@ export default class DandanSource extends BaseSource {
           }
 
           // 区分初始搜索结果与动态相关作品的结果过滤逻辑
-          const allTitles = [anime.animeTitle, ...apiAliases];
+          const allTitles = [
+            anime.animeTitle, 
+            ...apiAliases, 
+            ...(anime.aliases || [])
+          ];
           let isMatch = false;
 
           if (anime.isRelated || anime.isTmdbSource) {
@@ -378,7 +407,7 @@ export default class DandanSource extends BaseSource {
             const displayTitle = anime._displayTitle || anime.animeTitle;
 
             // 合并别名池：API返回的别名 + 原始标题（供合并工具对齐使用）
-            const finalAliases = [...apiAliases];
+            const finalAliases = [...new Set([...apiAliases, ...(anime.aliases || [])])];
             if (anime.animeTitle && anime.animeTitle !== displayTitle && !finalAliases.includes(anime.animeTitle)) {
               finalAliases.push(anime.animeTitle);
             }
